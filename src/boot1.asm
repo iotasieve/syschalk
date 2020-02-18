@@ -13,7 +13,7 @@ boot:
 
     ; read other sectors from the disk (.bin file)
     mov ah, 0x2 ; read sectors operation
-    mov al, 6 ; how much
+    mov al, 20 ; how much
     mov ch, 0 ; cylinder
     mov dh, 0 ; head
     mov cl, 2 ; sector
@@ -29,14 +29,14 @@ boot:
     mov eax, cr0
     or eax, 0x1
     mov cr0, eax
-    
-    ; finally fucking jump to the actual fucking code
+   
+    ; jump into the code that jumps into the kernel 
     jmp CODE_SEG:kernel_jump
 
 disk:
     db 0
 gdt_start:
-    dq 0x0
+    dq 0x0 ; null entry
 gdt_code:
     dw 0xFFFF ; limit (low byte)
     dw 0 ; base low
@@ -81,6 +81,6 @@ kernel_jump:
 section .bss
 align 4
 kernel_stack_bottom: equ $
-    resb 16384 ; reserve 16 kb of stack
+    resb 50000 ; reserve 16 kb of stack
 kernel_stack_top:
 
