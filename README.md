@@ -1,4 +1,4 @@
-# This is my personal OS (sorta)
+# This is my personal OS
 
 Its very in development and unstable, to run you need computer with x86 processor, you need `qemu`, `clang`, `make` and `ln`. 
 
