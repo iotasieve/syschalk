@@ -1,3 +1,5 @@
+SO FAR, BULLSHIT, THE "CHUNK PERIOD" THING DOESN'T EXIST IN MY CURRENT MEMORY ALLOCATOR, ALTHOUGH WILL LIKELY BE USED
+
 Memory allocator uses so called Memory Chunks, memory chunk is a structure that has specific properties: 
 ```c
 struct MemoryChunk {
