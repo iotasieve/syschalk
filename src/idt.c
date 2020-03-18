@@ -1,7 +1,7 @@
 // Also stolen from osdev, by the same reason, not gonna type it all by hand
 #include <inc/idt.h>
 
-void idt_init(void) {
+void IDT_init(void) {
     extern int load_idt();
     extern int irq0();
     extern int irq1();

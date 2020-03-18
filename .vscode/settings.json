@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    "__locale": "c",
+    "events.h": "c",
+    "ps2_keyboard.h": "c",
+    "pic.h": "c",
+    "types.h": "c",
+    "io.h": "c",
+    "idt.h": "c"
+  },
+  "editor.detectIndentation": false,
+  "editor.tabSize": 4
+}

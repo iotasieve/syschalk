@@ -11,7 +11,7 @@ struct IDT_entry{
  
 struct IDT_entry IDT[256];
 
-void idt_init(void);
+void IDT_init(void);
 
 
 #endif

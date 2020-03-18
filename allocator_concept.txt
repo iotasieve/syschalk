@@ -1,0 +1,11 @@
+Memory allocator uses so called Memory Chunks, memory chunk is a structure that has specific properties: 
+```c
+struct MemoryChunk {
+  MemoryChunk *prev;
+  MemoryChunk *next;
+  size_t chunk_size;
+  char flags;
+}
+```
+when allocation function is called, the allocator finds unallocated chunk, and checks if it fits or less the size, the chunk gets assigned to the memory address, however if amount of memory asked to allocate is less than `chunk_period` (where `chunk_period` is a constant value, for example will be equal to 512) it splits the memory, if the chunk is bigger than `chunk_size`. otherwise, if it doesn't fit the size of single chunk, the chunk will be merged if next nodes are marked as free and either exceed or fit the requested size, and capped to `chunk_period`, e.g. when 2000 bytes will be requested, if the memory found is 4096 bytes, it will get capped to the closest value that multiplies to `chunk_period`, multiplied to `chunk_size`, in this case, we have 2000 bytes requested, the closest integer to multiply to `chunk_period` (lets assume that `chunk_period = 512`), the formula is `floor(requested_memory/chunk_period)*chunk_period`, which in our case will be `floor(2000/512)*512 = 2048`. This is done to avoid allocating extra memory that will (most likely) be unused.
+
