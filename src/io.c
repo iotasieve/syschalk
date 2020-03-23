@@ -1,5 +1,8 @@
 #include <inc/io.h>
 
+// Forward delcare
+void* s2_MemoryAlloc(s2_Size size);
+
 short *VGA_PTR = (short *)0xb8000;
 
 void s2_TVMPrint(char *str, char color, short offset)
@@ -44,4 +47,19 @@ void s2_Panic(unsigned short code, char* message, bool isFatal, char* file, char
     {
         s2_TVMPrint("The system will continue working", 0x04, 400);
     }
+}
+
+char* s2_ToHex(unsigned int num)
+{
+
+    char *res = (char*)s2_MemoryAlloc(sizeof(char)*9);
+    int i = 0;
+    do {
+        unsigned char rem = num % 16;
+        num /= 16;
+        res[i] = "0123456789ABCDEF"[rem];
+        i += 1;
+    } while (num != 0);
+    res[8] = 0;
+    return res;
 }

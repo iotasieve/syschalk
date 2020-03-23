@@ -1,7 +1,7 @@
-#ifndef __IO_H
-#define __IO_H
+#pragma once
 
 #include <inc/types.h>
+
 #define VGA_SCR_WIDTH 80
 #define VGA_SCR_HEIGHT 25
 
@@ -11,6 +11,4 @@
 
 void s2_TVMPrint(char* str, char color, short offset);
 void s2_Panic(unsigned short code, char* message, bool isFatal, char* file, char* line);
-
-
-#endif
+char* s2_ToHex(unsigned int num);

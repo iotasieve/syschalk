@@ -1,5 +1,4 @@
-#ifndef S2_TYPES_H
-#define S2_TYPES_H
+#pragma once
 
 #define S2_TRUE 1
 #define S2_FALSE 0
@@ -12,5 +11,3 @@ typedef unsigned int s2_Time;
 #define false 0
 
 typedef unsigned int s2_Size;
-
-#endif

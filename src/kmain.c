@@ -14,7 +14,7 @@
 // TODO: CHANGE THIS void cleanscr(char color)
 void cleanscr(char color)
 {
-    s2_TVMPrint("                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ", color, 0);
+    s2_TVMPrint("                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ", color, 0);
 }
 
 void draw_circle(int r, char color)
@@ -66,16 +66,16 @@ char* to_bin(char *res, unsigned char byte)
     return res;
 }
 
-void masks_hud_draw(char *r0, char *r1)
-{
-    to_bin(r0, s2_In8(PIC_MASTER_DATA));
-    to_bin(r1, s2_In8(PIC_SLAVE_DATA));
-    s2_TVMPrint("MASTER ", 0x21, 2000-80-8-7);
-    s2_TVMPrint(r0, 0x21, 2000-80-8);
+// void masks_hud_draw(char *r0, char *r1)
+// {
+//     to_bin(r0, s2_In8(PIC_MASTER_DATA));
+//     to_bin(r1, s2_In8(PIC_SLAVE_DATA));
+//     s2_TVMPrint("MASTER ", 0x21, 2000-80-8-7);
+//     s2_TVMPrint(r0, 0x21, 2000-80-8);
     
-    s2_TVMPrint("SLAVE  ", 0x21, 2000-8-7);
-    s2_TVMPrint(r1, 0x21, 2000-8);
-}
+//     s2_TVMPrint("SLAVE  ", 0x21, 2000-8-7);
+//     s2_TVMPrint(r1, 0x21, 2000-8);
+// }
 
 void PIC_init()
 {
@@ -103,18 +103,75 @@ void PIC_init()
     s2_Out8(PIC_SLAVE_DATA, slave_mask);
 }
 
-char* s2_ToHex(unsigned int num)
+
+
+void s2_MemoryTest()
 {
-    char *res = (char*)s2_MemoryAlloc(sizeof(char)*9);
-    int i = 0;
-    do {
-        unsigned char rem = num % 16;
-        num /= 16;
-        res[i] = "0123456789ABCDEF"[rem];
-        i += 1;
-    } while (num != 0);
-    res[8] = 0;
-    return res;
+    // Root entry test
+    char *a = s2_MemoryAlloc(200);
+    if ((s2_MemoryEntry*)(a-sizeof(s2_MemoryEntry)) == rootEntry)
+    {
+        s2_TVMPrint("Memory Test | Root Entry | PASSED", 0x70, 0);
+    }
+    else 
+    {
+        s2_TVMPrint("Memory Test | Root Entry | FAILED", 0x70, 0);
+        
+        s2_TVMPrint(s2_ToHex((unsigned int)(a-sizeof(s2_MemoryEntry))), 0x70, 240);
+        s2_TVMPrint(s2_ToHex((unsigned int)rootEntry), 0x70, 240);
+    }
+
+    // Same-Entry test
+    char *b = s2_MemoryAlloc(100);
+    s2_MemoryFree(b);
+    char *c = s2_MemoryAlloc(50);
+    if (b == c) 
+    {
+        s2_TVMPrint("Memory Test | Pre-Made Node | PASSED", 0x70, 80);
+    }
+    else 
+    {    
+        s2_TVMPrint("Memory Test | Pre-Made Node | FAILED", 0x70, 80);
+        s2_TVMPrint(s2_ToHex((unsigned int)b), 0x70, 240);
+        s2_TVMPrint(s2_ToHex((unsigned int)c), 0x70, 240);
+    }
+
+    // New entry test
+    char *d = s2_MemoryAlloc(100);
+
+    if ((d-100) != b)
+    {
+        s2_TVMPrint("Memory Test | New-Node | PASSED", 0x70, 160);
+    }
+    else 
+    {
+        s2_TVMPrint("Memory Test | New-Node | FAILED", 0x70, 160);
+        s2_TVMPrint(s2_ToHex((unsigned int)d-100), 0x70, 240);
+        s2_TVMPrint(s2_ToHex((unsigned int)b), 0x70, 320);
+    }
+
+    s2_MemoryFree(d);
+    s2_MemoryFree(c);
+
+    char *e = s2_MemoryAlloc(150);
+    if (e == b)
+    {
+        s2_TVMPrint("Memory Test | Merge-Node | PASSED", 0x70, 240);
+    }
+    else
+    {
+        s2_TVMPrint("Memory Test | Merge-Node | FAILED", 0x70, 240);
+        s2_TVMPrint(s2_ToHex((unsigned int)e), 0x70, 320);
+        s2_TVMPrint(s2_ToHex((unsigned int)b), 0x70, 400);
+  
+    }
+
+    // Free test
+    s2_MemoryFree(e);
+    if (((s2_MemoryEntry*)(e-sizeof(s2_MemoryEntry)))->flags & S2_MEMFLAG_ISALLOC)
+    {
+        s2_TVMPrint("Memory Test | Free memory | FAILED", 0x70, 800);
+    }
 }
 
 extern void kmain()
@@ -122,34 +179,6 @@ extern void kmain()
     PIC_init();
     IDT_init();
     s2_InitMemoryAllocator();
-    char *a = (char*)s2_MemoryAlloc(sizeof(char)*200);
-    char *b = (char*)s2_MemoryAlloc(sizeof(char)*54);
-    char *c = (char*)s2_MemoryAlloc(sizeof(char)*20);
-    char *d = (char*)s2_MemoryAlloc(sizeof(char)*20);
-    s2_MemoryFree(c);
-    s2_MemoryPurge(d);
-    char *e = (char*)s2_MemoryAlloc(sizeof(char)*10);
-    char *f = (char*)s2_MemoryAlloc(sizeof(char)*50);
-    s2_MemoryFree(f);
-    char *g = (char*)s2_MemoryAlloc(sizeof(char)*45);
-    g = "This string used freed mem";
-    e = "This";
-    a = "This string uses root node";
-    b = "This string uses newly created node";
-    f[4] = 'L';
-    cleanscr(0x11);
-   
-    s2_TVMPrint(s2_ToHex((unsigned int)f), 0x04, 510);
+    s2_MemoryTest();
     
-    extern unsigned int heap_start;
-    s2_TVMPrint(s2_ToHex((unsigned int)g), 0x04, 500);
-
-
-    while (1)
-    {
-        s2_TVMPrint(g, 0x03, 0);
-        s2_TVMPrint(e, 0x03, 80);
-        s2_TVMPrint(a, 0x03, 160);
-        s2_TVMPrint(b, 0x03, 240);
-    }
 }

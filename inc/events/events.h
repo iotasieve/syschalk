@@ -1,6 +1,4 @@
-#ifndef S2_EVENTS_H
-#define S2_EVENTS_H
-
+#pragma once
 #define S2_EKEYBOARD 0
 
 #include <inc/types.h>
@@ -19,5 +17,3 @@ static s2_Event *s2_currentEvent;
 
 s2_Event* s2_EventAwait();
 void s2_DispatchEvent(s2_Event *ev);
- 
-#endif

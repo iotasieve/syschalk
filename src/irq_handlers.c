@@ -2,7 +2,6 @@
 #include <inc/io.h>
 #include "drivers/ps2_keyboard.c"
 
-char keyp[2];
 
 void irq0_handler(void) 
 {

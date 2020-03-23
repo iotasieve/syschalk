@@ -1,6 +1,6 @@
 #include <inc/types.h>
 #include <inc/mem/manager.h>
-
+#include <inc/io.h>
 
 void s2_InitMemoryAllocator()
 {
@@ -19,16 +19,17 @@ void s2_InitMemoryAllocator()
 bool s2_MemoryMergeIfPossible(s2_MemoryEntry *entry, s2_Size desiredSize)
 {
     s2_MemoryEntry *eIter = entry;
-    while ((eIter->flags & S2_MEMFLAG_ISALLOC) == false)
+    while ((eIter->next->flags & S2_MEMFLAG_ISALLOC) == false)
     {
         eIter = eIter->next;
 
         // Check
         entry->next = eIter;
-        entry->size = entry-eIter-sizeof(s2_MemoryEntry);
+        entry->size = (unsigned int)(entry-eIter)-sizeof(s2_MemoryEntry);
 
         if (entry->size > desiredSize)
             return true;
+            
     }
     return false;
 }
@@ -38,39 +39,42 @@ bool s2_MemoryMergeIfPossible(s2_MemoryEntry *entry, s2_Size desiredSize)
  */
 void* s2_MemoryAlloc(s2_Size size)
 {
+
     s2_Size memory_cap_loc = heap_start+S2_MEMCAP;
-    s2_MemoryEntry *biggestFree = rootEntry; 
+    s2_MemoryEntry *biggestFree = NULL; 
     s2_MemoryEntry *lastEntry;
     for (s2_MemoryEntry *entry = rootEntry; entry != 0; entry = entry->next)
     {
         lastEntry = entry;
         if (entry->size > size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
         {
-            entry->flags = entry->flags | S2_MEMFLAG_ISALLOC;
-            return entry+sizeof(s2_MemoryEntry);
+            entry->flags = S2_MEMFLAG_ISALLOC;
+            return entry+1;
         }
-        if (entry->size > biggestFree->size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
+        if (biggestFree != NULL && entry->size > biggestFree->size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
         {
             biggestFree = entry; 
         }
+        else if (biggestFree == NULL && ((entry->flags & S2_MEMFLAG_ISALLOC) == false)) biggestFree = entry;
     }
-    if (s2_MemoryMergeIfPossible(biggestFree, size))
+    if (biggestFree && s2_MemoryMergeIfPossible(biggestFree, size))
     {
-        biggestFree->flags = biggestFree->flags | S2_MEMFLAG_ISALLOC;
-        return biggestFree+sizeof(s2_MemoryEntry);
+        biggestFree->flags = S2_MEMFLAG_ISALLOC;
+        return biggestFree+1;
     }
     else {
         // Create new entry
         if ((s2_Size)(lastEntry+lastEntry->size) > memory_cap_loc) return NULL;
         if ((s2_Size)(lastEntry+lastEntry->size+size) > memory_cap_loc) return NULL;
         
-        s2_MemoryEntry *newEntry = (s2_MemoryEntry*)(lastEntry+lastEntry->size);
+        s2_MemoryEntry *newEntry = (s2_MemoryEntry*)((s2_Byte*)lastEntry+lastEntry->size+sizeof(s2_MemoryEntry));
         newEntry->size = size;
         newEntry->prev = lastEntry;
         newEntry->next = NULL;
         newEntry->flags = S2_MEMFLAG_ISALLOC;
         lastEntry->next = newEntry;
-        return newEntry+sizeof(s2_MemoryEntry);
+        return newEntry+1;
+
     }
     // Just in case
     return NULL;
@@ -78,13 +82,15 @@ void* s2_MemoryAlloc(s2_Size size)
 
 void s2_MemoryFree(void *ptr)
 {
-    ((s2_MemoryEntry*)(ptr-sizeof(s2_MemoryEntry)))->flags &= 0x11111110;
+    ptr = (s2_Byte*)ptr;
+    ((s2_MemoryEntry*)(ptr-sizeof(s2_MemoryEntry)))->flags &= ~S2_MEMFLAG_ISALLOC;
 }
 
 void s2_MemoryPurge(void *ptr)
 {
+    ptr = (s2_Byte*)ptr;
     s2_MemoryEntry *eptr = ((s2_MemoryEntry*)(ptr-sizeof(s2_MemoryEntry)));
-    for (s2_Size i = 0; i < (eptr->size+sizeof(s2_MemoryEntry)); i++)
+    for (s2_Size i = 0; i < (eptr->size); i++)
     {
         *(char*)(i+&ptr) = (char)0x69; // le funi number (debug, will be changed to 0)
     }

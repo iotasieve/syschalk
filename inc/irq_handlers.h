@@ -1,5 +1,4 @@
-#ifndef __IRQ_HANDLER_H
-#define __IRQ_HANDLER_H
+#pragma once
 void irq0_handler(void);
 
 void irq1_handler(void);
@@ -32,4 +31,3 @@ void irq14_handler(void);
 
 void irq15_handler(void);
 
-#endif

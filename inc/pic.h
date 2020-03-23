@@ -1,7 +1,5 @@
-#ifndef __PIC_H
-#define __PIC_H
+#pragma once
 
 char s2_In8(short port);
 void s2_Out8(short port, char data);
 
-#endif

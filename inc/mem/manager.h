@@ -1,5 +1,4 @@
-#ifndef S2_MANAGER_H
-#define S2_MANAGER_H
+#pragma once
 
 #include <inc/types.h>
 
@@ -32,7 +31,7 @@ s2_MemoryEntry *rootEntry;
  * Memory allocator initializer
  */
 
-extern unsigned int heap_start;
+unsigned int heap_start = 10*1024*1024;
 
 void s2_InitMemoryAllocator();
 
@@ -52,4 +51,3 @@ void* s2_MemoryAlloc(s2_Size size);
 void s2_MemoryFree(void *ptr);
 
 void s2_MemoryPurge(void *ptr);
-#endif

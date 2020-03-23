@@ -1,5 +1,4 @@
-#ifndef PS2_KEYBOARD_H
-#define PS2_KEYBOARD_H
+#pragma once
 
 #include <inc/events/events.h>
 #include <inc/types.h>
@@ -20,4 +19,3 @@ void s2_PS2KeyboardHandler();
 // s2_Byte s2_PS2KeyboardGetKeyState(s2_Byte KEY);
 char s2_PS2ConvertCodeToChar(s2_Byte code);
 
-#endif

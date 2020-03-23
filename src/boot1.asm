@@ -13,7 +13,7 @@ boot:
 
     ; read other sectors from the disk (.bin file)
     mov ah, 0x2 ; read sectors operation
-    mov al, 50 ; how much
+    mov al, 60 ; how much
     mov ch, 0 ; cylinder
     mov dh, 0 ; head
     mov cl, 2 ; sector
@@ -81,7 +81,5 @@ kernel_jump:
 section .bss
 align 4
 kernel_stack_bottom: equ $
-    resb 100000 ; reserve 16 kb of stack
+    resb 16384; reserve 16 kb of stack
 kernel_stack_top:
-global heap_start
-heap_start: equ $
