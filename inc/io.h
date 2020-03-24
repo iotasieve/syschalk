@@ -9,6 +9,8 @@
 #define S2_PANICERR_MEMALLOC 1
 
 
+extern bool lolmode;
 void s2_TVMPrint(char* str, char color, short offset);
 void s2_Panic(unsigned short code, char* message, bool isFatal, char* file, char* line);
 char* s2_ToHex(unsigned int num);
+void s2_TVMClear(char color);

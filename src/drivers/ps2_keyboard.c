@@ -4,22 +4,24 @@ static const char* scancode_chr = "1234567890-=qwertyuiop[]\nasdfghjkl;'`\\zxcvb
 
 void s2_PS2KeyboardHandler()
 {
-    s2_PS2KeyboardEvent pe;
+    s2_PS2KeyboardEvent *pe = (s2_PS2KeyboardEvent*)s2_MemoryAlloc(sizeof(s2_PS2KeyboardEvent));
 
     kout = s2_In8(0x60);
     if (kout < 0x81)
     {
-        pe.pressed = true;
-        pe.key = kout;
+        pe->pressed = true;
+        pe->key = kout;
     }
     else
     {
-        pe.pressed = false;
-        pe.key = kout-0x80;
+        pe->pressed = false;
+        pe->key = kout-0x80;
     }
-    s2_Event e = {S2_EKEYBOARD, 0, &pe};
-
-    s2_DispatchEvent(&e);
+    s2_Event *e = s2_AllocEvent();
+    e->ev_type = S2_EPS2KEYBOARD;
+    e->time = 0;
+    e->event = pe;
+    s2_DispatchEvent(e);
 }
 
 char s2_PS2ConvertCodeToChar(s2_Byte key)

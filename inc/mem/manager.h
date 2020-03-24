@@ -1,6 +1,7 @@
 #pragma once
 
 #include <inc/types.h>
+#include <inc/io.h>
 
 #define S2_MEMFLAG_DEFAULT 0b00000000
 #define S2_MEMFLAG_ISALLOC 0b00000001
@@ -31,7 +32,7 @@ s2_MemoryEntry *rootEntry;
  * Memory allocator initializer
  */
 
-unsigned int heap_start = 10*1024*1024;
+extern unsigned int heap_start;
 
 void s2_InitMemoryAllocator();
 

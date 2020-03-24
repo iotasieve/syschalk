@@ -1,10 +1,12 @@
+
+#include <inc/mem/manager.h>
 #include <inc/drivers/ps2_keyboard.h>
-#include "events/events.c"
+#include <inc/events/events.h>
 #include <inc/idt.h>
 #include <inc/io.h>
 #include <inc/irq_handlers.h>
 #include <inc/pic.h>
-#include "mem/manager.c"
+#include <inc/programs/shell/shell.h>
 
 #define PIC_MASTER 0x20
 #define PIC_MASTER_DATA (PIC_MASTER + 1)
@@ -12,10 +14,7 @@
 #define PIC_SLAVE_DATA (PIC_SLAVE + 1)
 
 // TODO: CHANGE THIS void cleanscr(char color)
-void cleanscr(char color)
-{
-    s2_TVMPrint("                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ", color, 0);
-}
+
 
 void draw_circle(int r, char color)
 {
@@ -179,6 +178,9 @@ extern void kmain()
     PIC_init();
     IDT_init();
     s2_InitMemoryAllocator();
-    s2_MemoryTest();
-    
+    s2_EventQueueInit();
+
+    s2_ShellInstance inst;
+    s2_ShellCreate(&inst);
+    s2_ShellStart(&inst);
 }

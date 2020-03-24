@@ -1,7 +1,4 @@
-#include <inc/pic.h>
-#include <inc/io.h>
-#include "drivers/ps2_keyboard.c"
-
+#include <inc/irq_handlers.h>
 
 void irq0_handler(void) 
 {

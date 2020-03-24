@@ -1,6 +1,6 @@
-#include <inc/types.h>
 #include <inc/mem/manager.h>
-#include <inc/io.h>
+
+unsigned int heap_start = 10*1024*1024;
 
 void s2_InitMemoryAllocator()
 {
@@ -27,8 +27,7 @@ bool s2_MemoryMergeIfPossible(s2_MemoryEntry *entry, s2_Size desiredSize)
         entry->next = eIter;
         entry->size = (unsigned int)(entry-eIter)-sizeof(s2_MemoryEntry);
 
-        if (entry->size > desiredSize)
-            return true;
+        if (entry->size >= desiredSize) return true;
             
     }
     return false;
@@ -39,19 +38,21 @@ bool s2_MemoryMergeIfPossible(s2_MemoryEntry *entry, s2_Size desiredSize)
  */
 void* s2_MemoryAlloc(s2_Size size)
 {
-
+    asm("cli");
+    
     s2_Size memory_cap_loc = heap_start+S2_MEMCAP;
     s2_MemoryEntry *biggestFree = NULL; 
     s2_MemoryEntry *lastEntry;
     for (s2_MemoryEntry *entry = rootEntry; entry != 0; entry = entry->next)
     {
         lastEntry = entry;
-        if (entry->size > size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
+        if (entry->size >= size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
         {
             entry->flags = S2_MEMFLAG_ISALLOC;
+            asm("sti");
             return entry+1;
         }
-        if (biggestFree != NULL && entry->size > biggestFree->size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
+        if (biggestFree != NULL && entry->size >= biggestFree->size && ((entry->flags & S2_MEMFLAG_ISALLOC) == false))
         {
             biggestFree = entry; 
         }
@@ -60,6 +61,7 @@ void* s2_MemoryAlloc(s2_Size size)
     if (biggestFree && s2_MemoryMergeIfPossible(biggestFree, size))
     {
         biggestFree->flags = S2_MEMFLAG_ISALLOC;
+        asm("sti");
         return biggestFree+1;
     }
     else {
@@ -73,9 +75,12 @@ void* s2_MemoryAlloc(s2_Size size)
         newEntry->next = NULL;
         newEntry->flags = S2_MEMFLAG_ISALLOC;
         lastEntry->next = newEntry;
+        
+        asm("sti");
         return newEntry+1;
 
     }
+    asm("sti");
     // Just in case
     return NULL;
 }

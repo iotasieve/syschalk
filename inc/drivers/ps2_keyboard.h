@@ -1,11 +1,13 @@
 #pragma once
 
+#include <inc/mem/manager.h>
 #include <inc/events/events.h>
 #include <inc/types.h>
 #include <inc/pic.h>
 
 #define S2_KESC 0x01
 #define S2_KBACKSPACE 0x0e
+#define S2_KENTER 0x1C
 #define S2_KTAB 0x0f
 
 typedef struct

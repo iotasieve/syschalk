@@ -66,7 +66,7 @@ dw 0xaa55
 bits 32
 extern_code:
 kernel_jump:
-   ; init data segments
+    ; init data segments
     mov ax, DATA_SEG,
     mov ds, ax
     mov es, ax

@@ -1,4 +1,7 @@
 #pragma once
+#include <inc/pic.h>
+#include <inc/drivers/ps2_keyboard.h>
+
 void irq0_handler(void);
 
 void irq1_handler(void);
