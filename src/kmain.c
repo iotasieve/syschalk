@@ -5,7 +5,8 @@
 #include <inc/idt.h>
 #include <inc/io.h>
 #include <inc/irq_handlers.h>
-#include <inc/pic.h>
+#include <inc/port.h>
+#include <inc/pci/pci.h>
 #include <inc/programs/shell/shell.h>
 
 #define PIC_MASTER 0x20
@@ -67,8 +68,8 @@ char* to_bin(char *res, unsigned char byte)
 
 // void masks_hud_draw(char *r0, char *r1)
 // {
-//     to_bin(r0, s2_In8(PIC_MASTER_DATA));
-//     to_bin(r1, s2_In8(PIC_SLAVE_DATA));
+//     to_bin(r0, s2_InB(PIC_MASTER_DATA));
+//     to_bin(r1, s2_InB(PIC_SLAVE_DATA));
 //     s2_TVMPrint("MASTER ", 0x21, 2000-80-8-7);
 //     s2_TVMPrint(r0, 0x21, 2000-80-8);
     
@@ -78,28 +79,28 @@ char* to_bin(char *res, unsigned char byte)
 
 void PIC_init()
 {
-    char master_mask = s2_In8(PIC_MASTER_DATA);
-    char slave_mask = s2_In8(PIC_SLAVE_DATA);
+    char master_mask = s2_InB(PIC_MASTER_DATA);
+    char slave_mask = s2_InB(PIC_SLAVE_DATA);
 
-    s2_Out8(PIC_MASTER, 0x11); // initialization sequence start
+    s2_OutB(PIC_MASTER, 0x11); // initialization sequence start
     sleep(1);
-    s2_Out8(PIC_SLAVE, 0x11);
+    s2_OutB(PIC_SLAVE, 0x11);
     sleep(1);
-    s2_Out8(PIC_MASTER_DATA, 32); // set offset
+    s2_OutB(PIC_MASTER_DATA, 32); // set offset
     sleep(1);
-    s2_Out8(PIC_SLAVE_DATA, 40);
+    s2_OutB(PIC_SLAVE_DATA, 40);
     sleep(1);
-    s2_Out8(PIC_MASTER_DATA, 4); // tell master PIC about slave PIC at IRQ 2
+    s2_OutB(PIC_MASTER_DATA, 4); // tell master PIC about slave PIC at IRQ 2
     sleep(1);
-    s2_Out8(PIC_SLAVE_DATA, 2); // tell slave PIC its cascade identity (whatever that supposed to mean)
+    s2_OutB(PIC_SLAVE_DATA, 2); // tell slave PIC its cascade identity (whatever that supposed to mean)
     sleep(1);
     // Additional parameters ( I suppose tells mode of PIC, in this case 8086/88 (MCS-80/85) mode ) 
-    s2_Out8(PIC_MASTER_DATA, 1);
+    s2_OutB(PIC_MASTER_DATA, 1);
     sleep(1);
-    s2_Out8(PIC_SLAVE_DATA, 1);
+    s2_OutB(PIC_SLAVE_DATA, 1);
     sleep(1);
-    s2_Out8(PIC_MASTER_DATA, master_mask);
-    s2_Out8(PIC_SLAVE_DATA, slave_mask);
+    s2_OutB(PIC_MASTER_DATA, master_mask);
+    s2_OutB(PIC_SLAVE_DATA, slave_mask);
 }
 
 
@@ -180,7 +181,5 @@ extern void kmain()
     s2_InitMemoryAllocator();
     s2_EventQueueInit();
 
-    s2_ShellInstance inst;
-    s2_ShellCreate(&inst);
-    s2_ShellStart(&inst);
+    s2_PCIDevicesScanBruteforce();
 }

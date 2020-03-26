@@ -3,7 +3,7 @@
 #include <inc/mem/manager.h>
 #include <inc/events/events.h>
 #include <inc/types.h>
-#include <inc/pic.h>
+#include <inc/port.h>
 
 #define S2_KESC 0x01
 #define S2_KBACKSPACE 0x0e

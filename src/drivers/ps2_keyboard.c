@@ -6,7 +6,7 @@ void s2_PS2KeyboardHandler()
 {
     s2_PS2KeyboardEvent *pe = (s2_PS2KeyboardEvent*)s2_MemoryAlloc(sizeof(s2_PS2KeyboardEvent));
 
-    kout = s2_In8(0x60);
+    kout = s2_InB(0x60);
     if (kout < 0x81)
     {
         pe->pressed = true;

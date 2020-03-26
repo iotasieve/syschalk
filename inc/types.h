@@ -3,6 +3,14 @@
 #define S2_TRUE 1
 #define S2_FALSE 0
 typedef unsigned char s2_Byte;
+typedef unsigned char s2_UInt8;
+typedef unsigned short s2_UInt16;
+typedef unsigned int s2_UInt32;
+
+typedef unsigned char s2_Int8;
+typedef unsigned short s2_Int16;
+typedef unsigned int s2_Int32;
+
 typedef unsigned int s2_Time;
 
 #define NULL 0
