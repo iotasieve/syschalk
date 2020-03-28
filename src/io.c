@@ -26,8 +26,8 @@ void s2_Panic(unsigned short code, char* message, bool isFatal, char* file, char
     s2_TVMPrint(message, 0x04, 80);
     s2_TVMPrint("in file ", 0x04, 160);
     s2_TVMPrint(file, 0x04, 168);
-    s2_TVMPrint("at ", 0x04, 240);
-    s2_TVMPrint(line, 0x04, 243);
+    s2_TVMPrint("at line ", 0x04, 240);
+    s2_TVMPrint(line, 0x04, 248);
     
     switch (code)
     {
@@ -36,6 +36,9 @@ void s2_Panic(unsigned short code, char* message, bool isFatal, char* file, char
         break;
     case S2_PANICERR_MEMALLOC:
         s2_TVMPrint("S2_PANICERR_MEMALLOC", 0x04, 480);
+        break;
+    case S2_PANICERR_NOVGASUPPORT:
+        s2_TVMPrint("S2_PANICERR_NOVGASUPPORT", 0x04, 480);
         break;
     default:
         s2_TVMPrint("S2_UNKNOWN_ERROR", 0x04, 480);

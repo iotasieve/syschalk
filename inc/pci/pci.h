@@ -16,11 +16,14 @@ typedef struct {
     s2_UInt8 subclass;
     s2_UInt8 progIF;
     s2_UInt8 revId;
+    s2_UInt8 headerType;
 
     s2_UInt8 bus;
     s2_UInt8 device;
     s2_UInt8 function;
 } s2_PCIDeviceDescriptor;
+
+extern bool s2_supportsVGA;
 
 /**
  * Read from PIC Controller
@@ -37,7 +40,10 @@ s2_UInt16 s2_PCIReadW(s2_UInt32 bus, s2_UInt32 device, s2_UInt32 function, s2_UI
  * Write to PIC controller
  * @param bus Bus id
  * @param device Device id
- * @param function Function id
+ * @param fu
+￼
+chibill_SCSPOToday at 1:00 PM
+Like I said I have had bad experiences with Rustnction Function id
  * @param regoffset Register offset
  * @param value Value to write
  */

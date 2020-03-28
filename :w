@@ -1,0 +1,145 @@
+#include <inc/drivers/vga/vga.h>
+#include <inc/mem/manager.h>
+#include <inc/io.h>
+
+s2_Byte *s2_VGALoc; 
+
+void* memcpy(void *dest, void *src, s2_Size count)
+{
+    return s2_MemoryCopy(dest, src, count);
+}
+
+bool s2_VGARegistersWrite(s2_Byte *registers)
+{
+    // s2_TVMPrint(s2_ToHex(*(registers)), 0x70, 00);
+    // Misc 
+    s2_OutB(S2_VGAPORT_MISCW, *(registers++));
+
+
+    // Sequencer
+    for (int i = 0; i < 5; i++)
+    {
+        s2_OutB(S2_VGAPORT_SEQIP, i);
+        s2_OutB(S2_VGAPORT_SEQDP, *(registers++));
+    }
+    
+    // CRT controller 
+    
+    // CRT Safety thing 
+    s2_OutB(S2_VGAPORT_CRTIP, 0x03);
+    s2_OutB(S2_VGAPORT_CRTDP, s2_InB(S2_VGAPORT_CRTDP) | 0x80);
+    s2_OutB(S2_VGAPORT_CRTIP, 0x11);
+    s2_OutB(S2_VGAPORT_CRTDP, s2_InB(S2_VGAPORT_CRTDP) & ~0x80);
+
+    registers[0x03] = registers[0x03] | 0x80;
+    registers[0x11] = registers[0x11] & ~0x80;
+ 
+    for (int i = 0; i < 25; i++)
+    {
+        s2_OutB(S2_VGAPORT_CRTIP, i);
+        s2_OutB(S2_VGAPORT_CRTDP, *(registers++));
+    }
+   
+    // Graphics contorller  
+    for (int i = 0; i < 9; i++)
+    {
+        s2_OutB(S2_VGAPORT_GCTIP, i);
+        s2_OutB(S2_VGAPORT_GCTDP, *(registers++));
+    }
+
+    // Attribute controller 
+    for (int i = 0; i < 21; i++)
+    {
+        s2_InB(S2_VGAPORT_ACTRS);
+        s2_OutB(S2_VGAPORT_ACTIP, i);
+        s2_OutB(S2_VGAPORT_ACTWP, *(registers++));
+    }
+    
+    s2_InB(S2_VGAPORT_ACTRS);
+    s2_OutB(S2_VGAPORT_ACTIP, 0x20);
+}
+
+bool s2_VGASupportsMode(s2_UInt32 width, s2_UInt32 height, s2_UInt32 depth)
+{
+    return width == 640 && height == 480 && depth == 4;
+}
+
+s2_Byte* s2_VGAGetBufferLocation()
+{
+    s2_OutB(S2_VGAPORT_GCTIP, 0x06);
+    s2_UInt8 seg = s2_InB(S2_VGAPORT_GCTDP) & (3 << 2);
+    switch (seg)
+    {
+        case 0: return (s2_Byte*)0x00000;
+        case 4: return (s2_Byte*)0xA0000;
+        case 8: return (s2_Byte*)0xB0000;
+        case 12: return (s2_Byte*)0xB8000;
+    default:
+        return 0;
+        break;
+    }
+}
+
+
+bool s2_VGASetMode(s2_UInt32 width, s2_UInt32 height, s2_UInt32 depth)
+{
+    if (!s2_VGASupportsMode(width, height, depth))
+        return false;
+    // Mode descriptor taken from osdev wiki https://files.osdev.org/mirrors/geezer/osd/graphics/modes.c
+    unsigned char g_640x480x16[] =
+    {
+    /* MISC */
+        0xE3,
+    /* SEQ */
+        0x03, 0x01, 0x08, 0x00, 0x06,
+    /* CRTC */
+        0x5F, 0x4F, 0x50, 0x82, 0x54, 0x80, 0x0B, 0x3E,
+        0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xEA, 0x0C, 0xDF, 0x28, 0x00, 0xE7, 0x04, 0xE3,
+        0xFF,
+    /* GC */
+        0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x05, 0x0F,
+        0xFF,
+    /* AC */
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
+        0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+        0x01, 0x00, 0x0F, 0x00, 0x00
+    };
+    s2_VGARegistersWrite(g_640x480x16);
+    s2_VGALoc = s2_VGAGetBufferLocation();
+}
+
+/**
+ * Optimized clear function
+ */
+void s2_VGAClearI(s2_UInt8 colorIndexed)
+{
+    
+    s2_OutB(S2_VGAPORT_SEQIP, 0x02);
+    for (int i = 0; i < 9600; i++)
+    {
+        s2_UInt32 *loc = (s2_VGALoc)+((32*i)>>3);
+        s2_OutB(S2_VGAPORT_SEQDP, (colorIndexed & 0x0F));
+        *loc = 0xFFFFFFFF;
+        s2_OutB(S2_VGAPORT_SEQDP, ~(colorIndexed & 0x0F));
+        *loc = 0x00000000;
+        if (loc > (s2_VGALoc+4*(9600-2))) return;
+    }
+}
+
+void s2_VGADrawBufferI(s2_UInt8 *buffer)
+{
+    
+    s2_OutB(S2_VGAPORT_SEQIP, 0x02);
+    for (int i = 0; i < (640/8)*480; i++)
+    {
+        s2_UInt8 r = i % 8;
+        s2_UInt8 *loc = (s2_VGALoc)+(i>>3);
+        s2_OutB(S2_VGAPORT_SEQDP, (buffer[i] & 0x0F));
+        *loc |= 1<<r;
+        s2_OutB(S2_VGAPORT_SEQDP, ~(buffer[i] & 0x0F));
+        *loc &= ~(1<<r);
+
+    }
+}
+

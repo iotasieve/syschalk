@@ -8,7 +8,7 @@
 #include <inc/port.h>
 #include <inc/pci/pci.h>
 #include <inc/programs/shell/shell.h>
-
+#include <inc/drivers/vga/vga.h>
 #define PIC_MASTER 0x20
 #define PIC_MASTER_DATA (PIC_MASTER + 1)
 #define PIC_SLAVE 0xA0
@@ -36,19 +36,8 @@ void draw_circle(int r, char color)
 }
 void sleep(short millis)
 {
-    for (int i = 0; i < millis * 10000000; ++i) {
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
+    for (int i = 0; i < millis * 100000; ++i) {
+        asm volatile("nop");
     }
 }
 
@@ -182,4 +171,22 @@ extern void kmain()
     s2_EventQueueInit();
 
     s2_PCIDevicesScanBruteforce();
+    if (!s2_supportsVGA)
+    {
+        s2_Panic(S2_PANICERR_NOVGASUPPORT, "Your PC/Emulator Does not support VGA", true, __FILE__, s2_ToHex(__LINE__));
+    }
+    s2_TVMPrint("VGA compatible card detected, switching modes", 0x70, 0);
+    
+    s2_Byte *scrBuffer = s2_MemoryAlloc(320*200);
+    
+
+    s2_VGASetMode(320, 200, 8);
+    s2_VGAReprogramPallete8();
+    
+    for (int i = 0; i < 256; i++)
+    {
+        scrBuffer[(i%5)+(i/5)*320] = i;
+    }
+
+    s2_VGADrawBuffer8I(scrBuffer);
 }

@@ -101,3 +101,10 @@ void s2_MemoryPurge(void *ptr)
     }
     s2_MemoryFree(ptr);
 }
+
+inline void* s2_MemoryCopy(void *dest, void *src, s2_Size size)
+{
+    for (int i = 0; i < (size); i++)
+        *((s2_UInt8*)(dest)+i) = *((s2_UInt8*)(src)+i);
+    return dest;
+}

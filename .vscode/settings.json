@@ -30,7 +30,8 @@
     "__functional_base_03": "c",
     "__tuple": "c",
     "limits": "c",
-    "memory": "c"
+    "memory": "c",
+    "iterator": "c"
 },
   "editor.detectIndentation": false,
   "editor.tabSize": 4

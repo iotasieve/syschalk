@@ -7,7 +7,7 @@
 
 #define S2_PANICERR_GENERATED 0
 #define S2_PANICERR_MEMALLOC 1
-
+#define S2_PANICERR_NOVGASUPPORT 3
 
 extern bool lolmode;
 void s2_TVMPrint(char* str, char color, short offset);

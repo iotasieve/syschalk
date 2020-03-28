@@ -1,7 +1,7 @@
 #pragma once
+#include <inc/types.h>
 
-char s2_InB(short port);
-void s2_OutB(short port, char data);
-
-long s2_InL(short port);
-void s2_OutL(short port, long data);
+extern char s2_InB(short port);
+extern void s2_OutB(short port, s2_Byte data);
+extern long s2_InL(short port);
+extern void s2_OutL(short port, long data);

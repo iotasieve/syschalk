@@ -52,3 +52,6 @@ void* s2_MemoryAlloc(s2_Size size);
 void s2_MemoryFree(void *ptr);
 
 void s2_MemoryPurge(void *ptr);
+
+
+extern inline void* s2_MemoryCopy(void *dest, void *src, s2_Size size);

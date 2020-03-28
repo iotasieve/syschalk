@@ -8,6 +8,9 @@
  * @param value Value to write
  * @returns 32 bit value from PCI table according to PCI Device Structure using register offset
  */
+
+bool s2_supportsVGA = false;
+
 s2_UInt16 s2_PCIReadW(s2_UInt32 bus, s2_UInt32 device, s2_UInt32 function, s2_UInt32 regoffset)
 {
     s2_UInt32 object = 
@@ -74,7 +77,6 @@ s2_PCIDeviceDescriptor* s2_PCIGetDeviceDescriptor(s2_UInt8 bus, s2_UInt8 device,
     res->command = s2_PCIReadW(bus, device, function, 4);
     res->status = s2_PCIReadW(bus, device, function, 6);
 
-
     // Since following parameters are 8 bit and read function returns 16 bit values we need to drop out unneeded values and shift them
     s2_UInt16 progIFRevId = s2_PCIReadW(bus, device, function, 8);
     res->progIF = (progIFRevId & 0xff00) >> 8;
@@ -83,6 +85,9 @@ s2_PCIDeviceDescriptor* s2_PCIGetDeviceDescriptor(s2_UInt8 bus, s2_UInt8 device,
     s2_UInt16 classSubclass = s2_PCIReadW(bus, device, function, 10);
     res->classCode = (classSubclass & 0xff00) >> 8;
     res->subclass = classSubclass & 0x00ff;
+    
+    // Header type
+    res->headerType = s2_PCIReadW(bus, device, function, 0x0e) & 0x00FF;
     return res;
 }
 
@@ -98,16 +103,35 @@ void s2_PCIDevicesScanBruteforce()
             for (int function = 0; function < functionCount; function++)
             {
                 dev = s2_PCIGetDeviceDescriptor(bus, device, function);
-                if (dev->vendorId == 0xffff || dev->vendorId == 0x0000) break;
+                if (dev->vendorId == 0xffff || dev->vendorId == 0x0000) continue;
                 if (dev->classCode == 0x03 && dev->subclass == 0x00)
                 {
-                    s2_TVMPrint(" VGA COMPATIBLE ", 0x43, 86+(printn*80));
+                    s2_supportsVGA = true;
+                    return;
+                    // s2_TVMPrint(" VGA COMPATIBLE ", 0x43, 86+(printn*80));
+                }
+                /*
+                if (dev->classCode == 0x02 && dev->subclass == 0x00)
+                {
+                    s2_TVMPrint(" ETHERNET COMPATIBLE ", 0x43, 86+(printn*80));
+                }
+                if (dev->classCode == 0x01 && dev->subclass == 0x01)
+                {
+                    s2_TVMPrint(" IDE COMPATIBLE ", 0x43, 86+(printn*80));
+                }
+                if (dev->classCode == 0x06 && dev->subclass == 0x00)
+                {
+                    s2_TVMPrint(" HOST BRIDGE ", 0x43, 86+(printn*80));
+                }
+                if (dev->classCode == 0x06 && dev->subclass == 0x01)
+                {
+                    s2_TVMPrint(" ISA BRIDGE ", 0x43, 86+(printn*80));
                 }
                 s2_TVMPrint("BUS ", 0x70, 0+(printn*80));
                 s2_TVMPrint(s2_ToHex(bus), 0x70, 4+(printn*80));
                 
-                s2_TVMPrint(" DEVICE ", 0x70, 12+(printn*80));
-                s2_TVMPrint(s2_ToHex(device), 0x70, 20+(printn*80));
+                s2_TVMPrint(" DEVIID ", 0x70, 12+(printn*80));
+                s2_TVMPrint(s2_ToHex(dev->deviceId), 0x70, 20+(printn*80));
  
                 s2_TVMPrint(" FUNCTION ", 0x70, 28+(printn*80));
                 s2_TVMPrint(s2_ToHex(function), 0x70, 38+(printn*80));
@@ -118,8 +142,10 @@ void s2_PCIDevicesScanBruteforce()
                 s2_TVMPrint(" CL/SB ", 0x70, 62+(printn*80));
                 s2_TVMPrint(s2_ToHex(dev->classCode), 0x70, 69+(printn*80));
                 s2_TVMPrint(s2_ToHex(dev->subclass), 0x70, (78)+(printn*80));
-                
-                printn += 2;
+                s2_TVMPrint(" HTYPE ", 0x70, 102+(printn*80));
+                s2_TVMPrint(s2_ToHex(dev->headerType), 0x70, 109+(printn*80));              
+                printn += 2;*/
+                s2_MemoryFree(dev);
             }   
         }
     }
