@@ -1,10 +1,11 @@
-ENTRY(boot)
+ENTRY(bootstrap)
 OUTPUT_FORMAT("binary")
 SECTIONS {
-    . = 0x7c00;
+    . = 0xf000;
+
     .text :
     {
-        *(.boot)
+        *(.bootstrap)
         *(.text)
     }
     .rodata : 

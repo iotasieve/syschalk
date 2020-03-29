@@ -1,85 +1,217 @@
-section .boot
 bits 16
-global boot
-boot:
+org 0x7c00
+Boot:
     ; enable a20
     mov ax, 0x2401
     int 0x15
     ; set vga text mode 
     mov ax, 0x3
     int 0x10
+    jmp LoadISO9660Kernel	
+
     
-    mov [disk], dl
+    
+   
+       ; jump into the code that jumps into the kernel 
+ReadConfig:
+    db 16 ; size of packet
+    db 0
+    dw 16 ; sectors
+RAMDestination: dd 0
+LBAConfig:    
+    dw 16 ; low
+    dw 0 ; hi
+    dd 0 ;hi
 
-    ; read other sectors from the disk (.bin file)
-    mov ah, 0x2 ; read sectors operation
-    mov al, 65 ; how much
-    mov ch, 0 ; cylinder
-    mov dh, 0 ; head
-    mov cl, 2 ; sector
-    mov dl, [disk] ; disk
-    mov bx, extern_code ; where on RAM copy it
-    int 0x13 ; the interrupt itself
+LoadISO9660Kernel:
+    mov ax, [KernelUnloadLocation]
+    mov [RAMDestination], ax
 
-    ; load GDT
+    ; read other sectors from the .iso file
+    mov si, ReadConfig
+    mov ah, 0x42 ; read sectors operation
+    mov dl, [DiskNumber] ; disk
+    int 0x13  ; bios int
+    
+
+    mov bx, [KernelUnloadLocation] ; load ISO
+    add bx, 158 ; get LBA location
+    mov ax, [bx] ; new LBA offset
+
+    mov [LBAConfig], ax ; move LBA offset
+    mov si, ReadConfig
+    mov ah, 0x42 ; read sectors operation
+    mov dl, [DiskNumber] ; disk
+    int 0x13  ; bios int
+ 
+    mov bx, [KernelUnloadLocation]
+    ; Poll for first character of every file
+CheckFilename:
+    ; Directory table, 33th byte indicates filename
+    
+    mov cx, bx
+    add cx, 33
+    mov di, cx
+
+    mov al, [di] ; Check if first character is K, TODO: (See trello)
+    cmp al, 'K'
+    je CheckEnd ; found filename starting with that character
+
+    ; otherwise we add size which is specified in first byte of directory entry
+    xor ax, ax
+    mov al, [bx]
+    add bx, ax
+    jmp CheckFilename
+
+CheckEnd:
+    add bx, 2
+    mov dx, [bx]
+    mov [LBAConfig], dx ; move LBA offset
+    mov si, ReadConfig
+    mov ah, 0x42 ; read sectors operation
+    mov dl, [DiskNumber] ; disk
+    int 0x13  ; bios int
+ 
+
+
+  ; load GDT
     cli
-    lgdt [gdt_pointer]
-    
+    lgdt [GDTPointer]
+
+
+    ; At this point we can just switch to protected mode
     ; use protected mode
     mov eax, cr0
     or eax, 0x1
     mov cr0, eax
    
-    ; jump into the code that jumps into the kernel 
+
+   
     jmp CODE_SEG:kernel_jump
 
-disk:
-    db 0
-gdt_start:
+DiskNumber:
+    db 0xe0
+GDTStart:
     dq 0x0 ; null entry
-gdt_code:
+GDTCode:
     dw 0xFFFF ; limit (low byte)
     dw 0 ; base low
     db 0 ; base mid
     db 10011010b ; look GDT access layout
     db 11001111b ; look GDT flags db 0 ; base end
     db 0
-gdt_data:
+GDTData:
     dw 0xFFFF ; limit (low byte)
     dw 0 ; base low
     db 0 ; base mid
     db 10010010b ; look GDT access layout
     db 11001111b ; look GDT flags
     db 0 ; base end
-gdt_end:
+GDTEnd:
 
-gdt_pointer:
-    dw gdt_end - gdt_start
-    dd gdt_start
+GDTPointer:
+    dw GDTEnd - GDTStart
+    dd GDTStart
 
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
-
-times 510 - ($-$$) db 0
-dw 0xaa55
+CODE_SEG equ GDTCode - GDTStart
+DATA_SEG equ GDTData - GDTStart
 
 bits 32
-extern_code:
 kernel_jump:
     ; init data segments
-    mov ax, DATA_SEG,
+    mov ax, DATA_SEG
     mov ds, ax
     mov es, ax
-    mov fs, ax
+    mov fs, ax    
     mov gs, ax
     mov ss, ax
 
-    extern kmain
-    call kmain
+    ; TODO: Jump into kernel.bin after finding
+    
+    call [KernelUnloadLocation]; Jump to kernel
+
     cli
     hlt
-section .bss
-align 4
-kernel_stack_bottom: equ $
-    resb 32768; reserve 32 kb of stack
-kernel_stack_top:
+times 510 - ($-$$) db 0
+dw 0xaa55
+
+KernelUnloadLocation:
+    dd 0xf000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

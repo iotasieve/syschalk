@@ -183,9 +183,9 @@ extern void kmain()
     s2_VGASetMode(320, 200, 8);
     s2_VGAReprogramPallete8();
     
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 320*200; i++)
     {
-        scrBuffer[(i%5)+(i/5)*320] = i;
+        scrBuffer[i] = i/256;
     }
 
     s2_VGADrawBuffer8I(scrBuffer);
