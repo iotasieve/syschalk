@@ -31,7 +31,13 @@
     "__tuple": "c",
     "limits": "c",
     "memory": "c",
-    "iterator": "c"
+    "iterator": "c",
+    "atapi.h": "c",
+    "manager.h": "c",
+    "texture.h": "c",
+    "texgen.h": "c",
+    "game.h": "c",
+    "log.h": "c"
 },
   "editor.detectIndentation": false,
   "editor.tabSize": 4

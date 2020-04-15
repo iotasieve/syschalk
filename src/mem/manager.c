@@ -1,10 +1,13 @@
 #include <inc/mem/manager.h>
-
+#include <inc/irq_handlers.h>
 unsigned int heap_start = 10*1024*1024;
+unsigned int memleaks = 0;
+s2_MemoryEntry *memUpper;
 
 void s2_InitMemoryAllocator()
 {
     rootEntry = (s2_MemoryEntry*)heap_start;
+    rootEntry->magic = 0xDEADBEEF;
     rootEntry->size = 512; // To be fair anything would do
     rootEntry->prev = NULL;
     rootEntry->next = NULL;
@@ -40,6 +43,8 @@ void* s2_MemoryAlloc(s2_Size size)
 {
     asm("cli");
     
+    memleaks += 1;
+    
     s2_Size memory_cap_loc = heap_start+S2_MEMCAP;
     s2_MemoryEntry *biggestFree = NULL; 
     s2_MemoryEntry *lastEntry;
@@ -72,21 +77,35 @@ void* s2_MemoryAlloc(s2_Size size)
         s2_MemoryEntry *newEntry = (s2_MemoryEntry*)((s2_Byte*)lastEntry+lastEntry->size+sizeof(s2_MemoryEntry));
         newEntry->size = size;
         newEntry->prev = lastEntry;
+        newEntry->magic = 0xDEADBEEF;
         newEntry->next = NULL;
         newEntry->flags = S2_MEMFLAG_ISALLOC;
         lastEntry->next = newEntry;
+
+        memUpper = newEntry;
         
         asm("sti");
         return newEntry+1;
 
     }
     asm("sti");
+    s2_QEMUDebugPrint("UHH");
     // Just in case
     return NULL;
 }
 
 void s2_MemoryFree(void *ptr)
 {
+    if (ptr < heap_start || ((((s2_MemoryEntry*)(ptr-sizeof(s2_MemoryEntry))))->magic != 0xDEADBEEF))
+    {
+        s2_QEMUDebugPrint("ATTEMPT TO FREE INVALID ADDESS");
+        s2_QEMUDebugPrint(s2_ToHex(ptr));
+        asm("cli");
+        asm("hlt");
+        return;
+    }
+    memleaks -= 1;
+
     ptr = (s2_Byte*)ptr;
     ((s2_MemoryEntry*)(ptr-sizeof(s2_MemoryEntry)))->flags &= ~S2_MEMFLAG_ISALLOC;
 }

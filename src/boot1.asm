@@ -16,7 +16,7 @@ Boot:
 ReadConfig:
     db 16 ; size of packet
     db 0
-    dw 16 ; sectors
+    dw 32 ; sectors
 RAMDestination: dd 0
 LBAConfig:    
     dw 16 ; low
@@ -126,8 +126,6 @@ kernel_jump:
     mov gs, ax
     mov ss, ax
 
-    ; TODO: Jump into kernel.bin after finding
-    
     call [KernelUnloadLocation]; Jump to kernel
 
     cli
@@ -136,7 +134,7 @@ times 510 - ($-$$) db 0
 dw 0xaa55
 
 KernelUnloadLocation:
-    dd 0xf000
+    dd 0xF000
 
 
 

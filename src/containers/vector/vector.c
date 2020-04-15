@@ -12,20 +12,25 @@ s2_CtVector* s2_CtVectorCreate(s2_CtVector *r, s2_Size typeSize)
 
 void s2_CtVectorPush(s2_CtVector *vec, void* v)
 {
-    if ((vec->size + 1) > vec->capacity)
+
+    if (vec->size > vec->capacity)
     {
-        unsigned int pcapacity = vec->capacity;
-        vec->capacity += S2_CTVEC_DEFAULT_CAPACITY;
-        void* newd = NEWSZ(vec->typeSize, vec->capacity);
-        for (int i = 0; i < pcapacity; ++i)
-        {
-            *ITERPTR(newd, vec->typeSize, i) = *ITERPTR(vec->data, vec->typeSize, i);
-        }
-        DELETE(vec->data);
-        vec->data = newd;
+        s2_QEMUDebugPrint("OVERFLOW!!!");
     }
-    *ITERPTR(vec->data, vec->typeSize, vec->size) = v;
+    // TODO: Fix reallocation
+    // if ((vec->size-1) > vec->capacity)
+    // {
+    //     unsigned int pcapacity = vec->capacity;
+    //     vec->capacity += S2_CTVEC_DEFAULT_CAPACITY;
+    //     void* newd = NEWSZ(vec->typeSize, vec->capacity);
+    //     s2_MemoryCopy(newd, vec->data, pcapacity);
+    //     DELETE(vec->data);
+    //     vec->data = newd;
+    // }
+
+    *ITERPTR(vec->data, vec->typeSize, vec->size) = (int)v;
     vec->size += 1;
+
 }
 
 void* s2_CtVectorPop(s2_CtVector *vec)
@@ -40,7 +45,10 @@ void* s2_CtVectorPop(s2_CtVector *vec)
 
 inline void* s2_CtVectorIndex(s2_CtVector *vec, s2_Size idx)
 {
-    return ITERPTR(vec->data, vec->typeSize, idx);
+    // char *d = s2_ToHex(*ITERPTR(vec->data, vec->typeSize, idx));
+    // s2_QEMUDebugPrint(d);
+    // DELETE(d);
+    return *ITERPTR(vec->data, vec->typeSize, idx);
 }
 
 void s2_CtVectorDispose(s2_CtVector *vec)

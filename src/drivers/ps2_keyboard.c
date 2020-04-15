@@ -5,7 +5,7 @@ static const char* scancode_chr = "1234567890-=qwertyuiop[]\nasdfghjkl;'`\\zxcvb
 void s2_PS2KeyboardHandler()
 {
     s2_PS2KeyboardEvent *pe = (s2_PS2KeyboardEvent*)s2_MemoryAlloc(sizeof(s2_PS2KeyboardEvent));
-
+    int eg = 0;
     kout = s2_InB(0x60);
     if (kout < 0x81)
     {

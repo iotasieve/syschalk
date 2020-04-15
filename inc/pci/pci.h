@@ -3,6 +3,7 @@
 #include <inc/types.h>
 #include <inc/io.h>
 #include <inc/port.h>
+#include <inc/pci/bar.h>
 #include <inc/mem/manager.h>
 #define S2_PCI_DATAPORT 0xCFC
 #define S2_PCI_COMMANDPORT 0xCF8
@@ -17,6 +18,9 @@ typedef struct {
     s2_UInt8 progIF;
     s2_UInt8 revId;
     s2_UInt8 headerType;
+    s2_UInt8 interruptLine;
+
+    s2_BaseAddressRegister **bars;
 
     s2_UInt8 bus;
     s2_UInt8 device;
@@ -67,3 +71,7 @@ bool s2_PCIIsDeviceMultifunction(s2_UInt8 bus, s2_UInt8 device);
 
 
 void s2_PCIDevicesScanBruteforce();
+
+s2_PCIDeviceDescriptor* s2_PCIScanFor(int class, int subclass, int progIF);
+
+s2_BaseAddressRegister* s2_PCIGetBaseAddressRegister(s2_PCIDeviceDescriptor *dev, s2_UInt8 barN);

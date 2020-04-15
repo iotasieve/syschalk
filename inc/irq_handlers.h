@@ -1,6 +1,11 @@
 #pragma once
 #include <inc/port.h>
 #include <inc/drivers/ps2_keyboard.h>
+#include <inc/events/events.h>
+bool ataLock;
+s2_UInt32 s2_msUptime;
+s2_UInt32 s2_sysDelta;
+
 
 void irq0_handler(void);
 

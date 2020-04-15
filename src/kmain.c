@@ -9,6 +9,8 @@
 #include <inc/pci/pci.h>
 #include <inc/programs/shell/shell.h>
 #include <inc/drivers/vga/vga.h>
+#include <inc/fs/iso9660/iso9660.h>
+#include <inc/log.h>
 #define PIC_MASTER 0x20
 #define PIC_MASTER_DATA (PIC_MASTER + 1)
 #define PIC_SLAVE 0xA0
@@ -36,7 +38,7 @@ void draw_circle(int r, char color)
 }
 void sleep(short millis)
 {
-    for (int i = 0; i < millis * 100000; ++i) {
+    for (int i = 0; i < millis * 10; ++i) {
         asm volatile("nop");
     }
 }
@@ -72,22 +74,22 @@ void PIC_init()
     char slave_mask = s2_InB(PIC_SLAVE_DATA);
 
     s2_OutB(PIC_MASTER, 0x11); // initialization sequence start
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_SLAVE, 0x11);
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_MASTER_DATA, 32); // set offset
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_SLAVE_DATA, 40);
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_MASTER_DATA, 4); // tell master PIC about slave PIC at IRQ 2
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_SLAVE_DATA, 2); // tell slave PIC its cascade identity (whatever that supposed to mean)
-    sleep(1);
+    s2_IOWait();
     // Additional parameters ( I suppose tells mode of PIC, in this case 8086/88 (MCS-80/85) mode ) 
     s2_OutB(PIC_MASTER_DATA, 1);
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_SLAVE_DATA, 1);
-    sleep(1);
+    s2_IOWait();
     s2_OutB(PIC_MASTER_DATA, master_mask);
     s2_OutB(PIC_SLAVE_DATA, slave_mask);
 }
@@ -152,7 +154,6 @@ void s2_MemoryTest()
         s2_TVMPrint("Memory Test | Merge-Node | FAILED", 0x70, 240);
         s2_TVMPrint(s2_ToHex((unsigned int)e), 0x70, 320);
         s2_TVMPrint(s2_ToHex((unsigned int)b), 0x70, 400);
-  
     }
 
     // Free test
@@ -161,32 +162,149 @@ void s2_MemoryTest()
     {
         s2_TVMPrint("Memory Test | Free memory | FAILED", 0x70, 800);
     }
+} 
+void IRQ_clear_mask(unsigned char IRQline) {
+    s2_UInt16 port;
+    s2_UInt16 value;
+ 
+    if(IRQline < 8) {
+        port = PIC_MASTER_DATA;
+    } else {
+        port = PIC_SLAVE_DATA;
+        IRQline -= 8;
+    }
+    value = s2_InB(port) & ~(1 << IRQline);
+    s2_OutB(port, value);        
+}
+
+#define S2_PAGE_PRESENT_BIT 1
+
+void s2_CreatePageDirectory(s2_Size *pdeloc)
+{
+    s2_Log("PageDirectory", "Creating page table", S2_LOGCOLOR_INFO);
+
+    for (int i = 0; i < 1024; i++)
+        pdeloc[i] = 0;
+}
+
+
+void s2_CreatePageTable(s2_Size *tblloc)
+{
+    s2_Log("PageTable", "Creating page table", S2_LOGCOLOR_INFO);
+
+    for (int i = 0; i < 1024; i++)
+        tblloc[i] = 0;
+}
+
+void s2_PageMap(s2_Size *pde, s2_Size vaddr, s2_Size paddr)
+{
+    s2_Size *ptr;
+
+    if (!(pde[(vaddr >> 22)] & S2_PAGE_PRESENT_BIT))
+    {
+        s2_Log("PageMap", "Page not present", S2_LOGCOLOR_INFO);
+        s2_CreatePageTable(pde[1024 * (vaddr >> 22)]);
+    }
 }
 
 extern void kmain()
 {
-    PIC_init();
-    IDT_init();
-    s2_InitMemoryAllocator();
-    s2_EventQueueInit();
+    // s2_InitMemoryAllocator();
+    // PIC_init();
+    // s2_OutB(PIC_MASTER_DATA, 0);
+    // s2_OutB(PIC_SLAVE_DATA, 0);
+    // IDT_init();
 
-    s2_PCIDevicesScanBruteforce();
-    if (!s2_supportsVGA)
-    {
-        s2_Panic(S2_PANICERR_NOVGASUPPORT, "Your PC/Emulator Does not support VGA", true, __FILE__, s2_ToHex(__LINE__));
-    }
-    s2_TVMPrint("VGA compatible card detected, switching modes", 0x70, 0);
+    s2_LogTest();
+
+    int esp;
+    extern unsigned int kernel_stack_bottom;
+    asm("movl %%esp, %0" : "=r"(esp));
+    s2_QEMUDebugPrint(s2_ToDecNoA(&kernel_stack_bottom));
+    s2_QEMUDebugPrint(s2_ToDecNoA(esp));
+
+    // s2_CreatePageDirectory(heap_start);
+
+
+    // s2_EventQueueInit();
+    // s2_PITTimerInit();
+    // s2_PCIDevicesScanBruteforce();
+
+    // // s2_PCIDevicesScanBruteforce();
+    // // Scan of IDE controller
+    // s2_PCIDeviceDescriptor *a = s2_PCIScanFor(1, 1, -1);
     
-    s2_Byte *scrBuffer = s2_MemoryAlloc(320*200);
+    // if (a != NULL)
+    // {
+    //     s2_TVMPrintA("Found IDE-Compatible device");
+    //     if ((a->interruptLine & 0xFF) == 0xFE)
+    //     {
+    //         s2_TVMPrintA("This device requires IRQ assignment (unhandled)");
+    //     }
+    //     else
+    //     {
+    //         s2_TVMPrintA("This device doesn't require IRQ assignment");
+    //         if (a->classCode == 0x01 && a->subclass == 0x01 && (a->progIF == 0x8A || a->progIF == 0x80))
+    //         {
+    //             s2_TVMPrintA("This is parallel IDE controller which uses IRQ 14 and IRQ 15");
+    //             s2_IDEDevice *dev;
+    //             bool found = false;
+    //             for (int i = 0; i < 2; i++)
+    //             {
+    //                 for (int j = 0; j < 2; j++)
+    //                 {
+    //                     dev = s2_IDECreateATADeviceInstance(a, i, j);
+    //                     if (dev->exists)
+    //                     {
+    //                         if (dev->type == S2_ATA_TYPE_ATAPI)
+    //                         {
+    //                             found = true;
+    //                             goto enddev;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+
+    //             enddev:
+
+    //             if (found)
+    //             {
+    //                 s2_TVMPrintA("Found ATAPI device");
+    //                 s2_ISO9660FS *fs = s2_ISO9660InstCreate(dev);
+    //                 gFS = fs;
+                     
+                
+    //                 if (!s2_supportsVGA)
+    //                 {
+    //                     s2_Panic(S2_PANICERR_NOVGASUPPORT, "Your PC/Emulator Does not support VGA", true, __FILE__, s2_ToHex(__LINE__));
+    //                 }
+    //                 s2_TVMPrint("VGA compatible card detected, switching modes", 0x70, 0);
+                    
+    //                 // s2_Byte *scrBuffer = s2_MemoryAlloc(320*200);
+                    
+
+    //                 s2_VGASetMode(320, 200, 8);
+    //                 s2_VGAReprogramPallete8();
+                    
+    //                 GMain();
+    //             }
+    //             else
+    //             {
+    //                 s2_TVMPrintA("Couldn't find CD-ROM System halted");
+    //             }
+    //         }
+    //     }
+        
+    // }
+    // else
+    // {
+    //     s2_TVMPrintA("No IDE-Compatible device found, system halted");
+    // }
+    
     
 
-    s2_VGASetMode(320, 200, 8);
-    s2_VGAReprogramPallete8();
     
-    for (int i = 0; i < 320*200; i++)
-    {
-        scrBuffer[i] = i/256;
-    }
 
-    s2_VGADrawBuffer8I(scrBuffer);
+    // s2_VGADrawBuffer8I(scrBuffer);
+    
 }

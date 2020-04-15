@@ -1,6 +1,7 @@
+#pragma once
 #include <inc/types.h>
 #include <inc/mem/manager.h>
-#define S2_CTVEC_DEFAULT_CAPACITY 128
+#define S2_CTVEC_DEFAULT_CAPACITY 10000
 typedef struct
 {
     void *data;

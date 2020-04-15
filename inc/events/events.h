@@ -1,5 +1,9 @@
 #pragma once
 #define S2_EPS2KEYBOARD 0
+#define S2_EATAPRIMARYIRQ 1
+#define S2_EATASECONDARYIRQ 2
+#define S2_EPS2KEYBOARDP 3
+
 #define S2_EVENT_QUEUE_MAX 128
 
 #include <inc/mem/manager.h>
@@ -34,6 +38,7 @@ typedef struct
 static s2_Event *s2_currentEvent = NULL;
 static s2_EventQueue s2_eventQueue;
 
+
 void s2_EventQueueInit();
 
 void s2_EventQueueQueue(s2_Event *ev);
@@ -47,3 +52,5 @@ void s2_DisposeEvent(s2_Event *event);
 s2_Event* s2_EventAwait();
 
 void s2_DispatchEvent(s2_Event *ev);
+
+s2_Event* s2_EventUnqueue();
