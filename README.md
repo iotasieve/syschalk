@@ -1,4 +1,4 @@
-#This is a very bad example on how to write OS please don't learn from it
+# This is a very bad example on how to write OS please don't learn from it
 
 My personal OS
 
